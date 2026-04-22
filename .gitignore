@@ -39,6 +39,8 @@ ENV/
 tmp_npm_test/
 tests/
 node_modules/
+sessions/
+.pytest_cache/
 
 # OS files
 .DS_Store
