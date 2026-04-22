@@ -92,8 +92,9 @@
             transition: border-color 0.2s;
         }
 
-        .upload-area:hover {
+        .upload-area:hover, .upload-area.dragover {
             border-color: var(--accent);
+            background-color: rgba(1, 105, 111, 0.05);
         }
 
         .upload-area .icon {
@@ -102,8 +103,68 @@
             opacity: 0.5;
         }
 
+        /* Preview State */
+        #preview-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .video-wrapper {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .metadata-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: rgba(255,255,255,0.05);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: 'JetBrains Mono', monospace;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-secondary);
+        }
+
+        .badge strong {
+            color: var(--text-primary);
+            margin-right: 4px;
+        }
+
+        /* Spinner */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         /* Utils */
-        .hidden { display: none; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -130,11 +191,32 @@
 
     <main id="content">
         <section id="upload-panel" class="upload-area">
-            <div class="icon">☁️</div>
-            <h2>Select Video to Process</h2>
-            <p class="caption">Drag and drop video here or click to browse</p>
-            <p class="caption" style="margin-top: 8px;">Supported: MP4, MOV, AVI, WEBM (Max 2GB)</p>
+            <div id="upload-idle">
+                <div class="icon" style="text-align: center;">☁️</div>
+                <h2 style="text-align: center;">Select Video to Process</h2>
+                <p class="caption">Drag and drop video here or click to browse</p>
+                <p class="caption" style="margin-top: 8px;">Supported: MP4, MOV, AVI, WEBM (Max 2GB)</p>
+            </div>
+            
+            <div id="upload-loading" class="hidden">
+                <div class="spinner" style="margin: 0 auto 16px;"></div>
+                <h2 style="text-align: center;">Uploading Video...</h2>
+                <p class="caption">Extracting metadata and preparing session</p>
+            </div>
+            
             <input type="file" id="video-input" class="hidden" accept="video/*">
+        </section>
+
+        <section id="preview-panel" class="hidden">
+            <div id="preview-container">
+                <div class="video-wrapper">
+                    <video id="video-preview" controls></video>
+                </div>
+                
+                <div class="metadata-bar" id="metadata-bar">
+                    <!-- Badges injected by JS -->
+                </div>
+            </div>
         </section>
 
         <section id="main-output" class="hidden">
@@ -172,6 +254,26 @@
                 if (type === 'success') el.style.color = 'var(--status-success)';
                 if (type === 'warning') el.style.color = 'var(--status-warning)';
                 if (type === 'destructive') el.style.color = 'var(--status-destructive)';
+            },
+
+            formatTime: (seconds) => {
+                const h = Math.floor(seconds / 3600);
+                const m = Math.floor((seconds % 3600) / 60);
+                const s = Math.floor(seconds % 60);
+                return [h, m, s]
+                    .map(v => v < 10 ? "0" + v : v)
+                    .filter((v, i) => v !== "00" || i > 0)
+                    .join(":");
+            },
+
+            renderMetadata: (meta) => {
+                const bar = UI.el('metadata-bar');
+                bar.innerHTML = `
+                    <div class="badge"><strong>Duration:</strong> ${UI.formatTime(meta.duration)}</div>
+                    <div class="badge"><strong>Resolution:</strong> ${meta.resolution}</div>
+                    <div class="badge"><strong>FPS:</strong> ${meta.fps.toFixed(2)}</div>
+                    <div class="badge"><strong>Size:</strong> ${(meta.size_bytes / (1024 * 1024)).toFixed(1)} MB</div>
+                `;
             }
         };
 
@@ -193,6 +295,10 @@
                     method: 'POST',
                     body: formData
                 });
+                if (!resp.ok) {
+                    const error = await resp.json();
+                    throw new Error(error.detail || 'Upload failed');
+                }
                 return await resp.json();
             },
             
@@ -210,6 +316,54 @@
                 return await resp.json();
             }
         };
+
+        async function handleFileUpload(file) {
+            if (!file.type.startsWith('video/')) {
+                alert('Please select a valid video file.');
+                return;
+            }
+
+            if (file.size > 2 * 1024 * 1024 * 1024) {
+                alert('File size exceeds 2GB limit.');
+                return;
+            }
+
+            try {
+                App.status = 'uploading';
+                UI.hide('upload-idle');
+                UI.show('upload-loading');
+                UI.setStatus('Uploading video...', 'warning');
+
+                const data = await API.uploadVideo(file);
+                
+                App.sessionId = data.session_id;
+                App.metadata = data.metadata;
+                App.status = 'ready';
+
+                // Setup video preview
+                const video = UI.el('video-preview');
+                video.src = URL.createObjectURL(file);
+                
+                UI.renderMetadata(data.metadata);
+                
+                UI.hide('upload-panel');
+                UI.show('preview-panel');
+                UI.setStatus('Video ready for processing', 'success');
+                
+                // Update config defaults from metadata
+                App.config.endTime = data.metadata.duration;
+                App.config.fps = Math.min(data.metadata.fps, 1); // Default to 1fps or native if lower
+
+                console.log('Upload success:', data);
+            } catch (e) {
+                console.error('Upload failed', e);
+                App.status = 'error';
+                UI.hide('upload-loading');
+                UI.show('upload-idle');
+                UI.setStatus(`Upload failed: ${e.message}`, 'destructive');
+                alert(`Upload failed: ${e.message}`);
+            }
+        }
 
         // Initialize
         window.addEventListener('DOMContentLoaded', async () => {
@@ -230,14 +384,49 @@
             const uploadPanel = UI.el('upload-panel');
             const videoInput = UI.el('video-input');
             
-            uploadPanel.addEventListener('click', () => videoInput.click());
+            uploadPanel.addEventListener('click', () => {
+                if (App.status === 'idle' || App.status === 'error') {
+                    videoInput.click();
+                }
+            });
             
             videoInput.addEventListener('change', (e) => {
                 if (e.target.files.length > 0) {
-                    console.log('File selected:', e.target.files[0].name);
-                    // Upload logic will be in next plan
+                    handleFileUpload(e.target.files[0]);
                 }
             });
+
+            // Drag and Drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadPanel.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadPanel.addEventListener(eventName, () => {
+                    if (App.status === 'idle' || App.status === 'error') {
+                        uploadPanel.classList.add('dragover');
+                    }
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadPanel.addEventListener(eventName, () => {
+                    uploadPanel.classList.remove('dragover');
+                }, false);
+            });
+
+            uploadPanel.addEventListener('drop', (e) => {
+                if (App.status === 'idle' || App.status === 'error') {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                    if (files.length > 0) {
+                        handleFileUpload(files[0]);
+                    }
+                }
+            }, false);
         });
     </script>
 </body>
