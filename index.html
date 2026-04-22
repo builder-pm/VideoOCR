@@ -483,6 +483,84 @@
 
         .btn-primary:hover { opacity: 0.9; }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Progress UI */
+        #processing-header {
+            margin-bottom: 32px;
+        }
+
+        .processing-status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--accent);
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(1, 105, 111, 0.5);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--status-destructive);
+            color: var(--status-destructive);
+        }
+
+        /* Results Split View */
+        #results-split-view {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            flex-grow: 1;
+            min-height: 0;
+        }
+
+        #frame-browser, #text-output-container {
+            background: var(--bg-panel);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 20px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -552,8 +630,36 @@
         </section>
 
         <section id="main-output" class="hidden">
-            <!-- Processing UI will go here -->
-            <h2>Extraction Results</h2>
+            <div id="processing-header">
+                <div class="processing-status-row">
+                    <h2 id="process-status">Preparing extraction...</h2>
+                    <button id="cancel-btn" class="btn-secondary">Cancel Extraction</button>
+                </div>
+                
+                <div class="progress-container">
+                    <div id="progress-bar-fill" class="progress-bar-fill"></div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-label">Processed</span>
+                        <span class="stat-value" id="stats-processed">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Skipped</span>
+                        <span class="stat-value" id="stats-skipped">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Text Blocks</span>
+                        <span class="stat-value" id="stats-blocks">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="results-split-view" class="hidden">
+                <div id="frame-browser"></div>
+                <div id="text-output-container"></div>
+            </div>
         </section>
     </main>
 
