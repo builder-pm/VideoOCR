@@ -378,23 +378,50 @@ async def process_video_endpoint(config: ProcessConfig):
 
 @app.get("/progress")
 async def get_progress(session_id: str):
-    """Get current processing progress."""
+    """Stream processing progress via SSE."""
     state = session_manager.get_session(session_id)
     if not state:
-        return JSONResponse({"error": "Session not found"}, status_code=404)
+        raise HTTPException(status_code=404, detail="Session not found")
 
-    return {
-        "active": state.active,
-        "progress": state.progress,
-        "current_frame": state.current_frame,
-        "total_frames": state.total_frames,
-        "skipped_blur": state.skipped_blur,
-        "text_blocks": [
-            {k: v for k, v in b.items() if k != "frame_path"}
-            for b in state.text_blocks
-        ],
-        "error": state.error,
-    }
+    async def event_generator():
+        last_block_count = 0
+        heartbeat_interval = 5  # seconds
+        last_send_time = asyncio.get_event_loop().time()
+
+        while True:
+            await asyncio.sleep(0.5)
+            now = asyncio.get_event_loop().time()
+            
+            # Only send if there's an update or heartbeat is due
+            has_update = len(state.text_blocks) > last_block_count or not state.active
+            
+            if has_update or (now - last_send_time >= heartbeat_interval):
+                if has_update:
+                    current_blocks = state.text_blocks[last_block_count:]
+                    payload = {
+                        "status": "processing" if state.active else ("completed" if not state.error else "failed"),
+                        "progress": state.progress,
+                        "current_frame": state.current_frame,
+                        "total_frames": state.total_frames,
+                        "skipped_blur": state.skipped_blur,
+                        "text_blocks": [
+                            {k: v for k, v in b.items() if k != "frame_path"}
+                            for b in current_blocks
+                        ],
+                        "error": state.error,
+                    }
+                    yield f"data: {json.dumps(payload)}\n\n"
+                    last_block_count = len(state.text_blocks)
+                else:
+                    # Heartbeat
+                    yield ": heartbeat\n\n"
+                
+                last_send_time = now
+
+            if not state.active:
+                break
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @app.post("/cancel")
