@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VideoOCR Studio</title>
+    <!-- Fonts -->
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-deep: #0f0e0c;
+            --bg-panel: #141312;
+            --accent: #01696f;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1a1;
+            --status-warning: #f59e0b;
+            --status-success: #10b981;
+            --status-destructive: #ef4444;
+            
+            --sidebar-width: 320px;
+            --base-unit: 4px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Satoshi', sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        h1 { font-size: 28px; line-height: 1.2; font-weight: 600; margin-bottom: 16px; }
+        h2 { font-size: 20px; line-height: 1.2; font-weight: 600; margin-bottom: 12px; }
+        p { font-size: 16px; line-height: 1.5; font-weight: 400; }
+        .caption { font-size: 14px; line-height: 1.4; font-weight: 400; color: var(--text-secondary); }
+        code, pre { font-family: 'JetBrains Mono', monospace; }
+
+        /* Layout */
+        aside#sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-panel);
+            height: 100%;
+            border-right: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        main#content {
+            flex-grow: 1;
+            height: 100%;
+            padding: 32px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Sidebar Sections */
+        .sidebar-section {
+            margin-bottom: 32px;
+        }
+
+        .controls-placeholder {
+            border: 1px dashed rgba(255,255,255,0.1);
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        /* Main Sections */
+        .upload-area {
+            flex-grow: 1;
+            border: 2px dashed rgba(255,255,255,0.1);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent);
+        }
+
+        .upload-area .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* Utils */
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <aside id="sidebar">
+        <header class="sidebar-section">
+            <h1>VideoOCR Studio</h1>
+            <p class="caption">Extract text from videos with precision.</p>
+        </header>
+
+        <section class="sidebar-section">
+            <h2>Controls</h2>
+            <div id="controls-container" class="controls-placeholder">
+                Upload a video to see controls.
+            </div>
+        </section>
+
+        <footer style="margin-top: auto;">
+            <div id="status-badge" class="caption">
+                Checking system status...
+            </div>
+        </footer>
+    </aside>
+
+    <main id="content">
+        <section id="upload-panel" class="upload-area">
+            <div class="icon">☁️</div>
+            <h2>Select Video to Process</h2>
+            <p class="caption">Drag and drop video here or click to browse</p>
+            <p class="caption" style="margin-top: 8px;">Supported: MP4, MOV, AVI, WEBM (Max 2GB)</p>
+            <input type="file" id="video-input" class="hidden" accept="video/*">
+        </section>
+
+        <section id="main-output" class="hidden">
+            <!-- Processing UI will go here -->
+            <h2>Extraction Results</h2>
+        </section>
+    </main>
+
+    <script>
+        const App = {
+            sessionId: null,
+            metadata: null,
+            config: {
+                startTime: 0,
+                endTime: 0,
+                fps: 1,
+                blurThreshold: 100,
+                ocrEngine: 'paddle',
+                deduplicate: true,
+                language: 'en'
+            },
+            status: 'idle', // 'idle', 'uploading', 'ready', 'processing', 'completed', 'error'
+        };
+
+        const UI = {
+            el: (id) => document.getElementById(id),
+            
+            show: (id) => UI.el(id).classList.remove('hidden'),
+            hide: (id) => UI.el(id).classList.add('hidden'),
+            
+            setStatus: (msg, type = 'secondary') => {
+                const el = UI.el('status-badge');
+                el.innerText = msg;
+                el.style.color = `var(--text-${type})`;
+                if (type === 'success') el.style.color = 'var(--status-success)';
+                if (type === 'warning') el.style.color = 'var(--status-warning)';
+                if (type === 'destructive') el.style.color = 'var(--status-destructive)';
+            }
+        };
+
+        const API = {
+            async getStatus() {
+                try {
+                    const resp = await fetch('/status');
+                    return await resp.json();
+                } catch (e) {
+                    console.error('API.getStatus failed', e);
+                    return null;
+                }
+            },
+            
+            async uploadVideo(file) {
+                const formData = new FormData();
+                formData.append('file', file);
+                const resp = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                return await resp.json();
+            },
+            
+            async startProcessing(config) {
+                const resp = await fetch('/process', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                return await resp.json();
+            },
+
+            async getResults(sessionId) {
+                const resp = await fetch(`/results?session_id=${sessionId}`);
+                return await resp.json();
+            }
+        };
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', async () => {
+            UI.setStatus('Connecting to backend...');
+            const status = await API.getStatus();
+            
+            if (status) {
+                const engines = [];
+                if (status.paddleocr_available) engines.push('PaddleOCR');
+                if (status.tesseract_available) engines.push('Tesseract');
+                
+                UI.setStatus(`Backend Ready: ${engines.join(' + ')} available`, 'success');
+            } else {
+                UI.setStatus('Backend unreachable', 'destructive');
+            }
+            
+            // Setup Upload triggers
+            const uploadPanel = UI.el('upload-panel');
+            const videoInput = UI.el('video-input');
+            
+            uploadPanel.addEventListener('click', () => videoInput.click());
+            
+            videoInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    console.log('File selected:', e.target.files[0].name);
+                    // Upload logic will be in next plan
+                }
+            });
+        });
+    </script>
+</body>
+</html>

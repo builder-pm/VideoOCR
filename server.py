@@ -1,4 +1,5 @@
 import os
+os.environ["FLAGS_enable_onednn"] = "0"
 import uuid
 import asyncio
 import subprocess
@@ -37,7 +38,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
-        logging.FileHandler("server.log"),
+        logging.FileHandler("server_app.log"),
         logging.StreamHandler()
     ]
 )
@@ -104,10 +105,16 @@ class ProcessConfig(BaseModel):
     language: str = "en"
 
 
+FFMPEG_PATH = "C:\\Users\\naman\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg.Essentials_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-8.1-essentials_build\\bin\\ffmpeg.exe"
+FFPROBE_PATH = "C:\\Users\\naman\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg.Essentials_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-8.1-essentials_build\\bin\\ffprobe.exe"
+
 def get_executable(name: str) -> str:
-    """Check if executable is in PATH."""
+    """Check if executable is in PATH, otherwise return absolute fallback."""
     if shutil.which(name):
         return name
+    fallback = FFMPEG_PATH if name == "ffmpeg" else FFPROBE_PATH
+    if os.path.exists(fallback):
+        return fallback
     return name
 
 def get_video_metadata(video_path: str) -> dict:
@@ -185,20 +192,31 @@ def ocr_with_paddle(frame_path: str, lang: str = "en") -> str:
     lang_map = {"en": "en", "hi": "hi", "en_hi": "ch"}
     ocr_lang = lang_map.get(lang, "en")
 
-    # Fixed: Removed show_log and use_gpu which may cause ValueError in newer versions
-    # and updated use_angle_cls to use_textline_orientation if possible
     ocr = PaddleOCR(lang=ocr_lang)
-    result = ocr.ocr(frame_path, cls=True)
+    # Use predict instead of ocr() for newer versions
+    results = list(ocr.predict(frame_path))
+    logger.info(f"PaddleOCR raw results type: {type(results)}")
+    if results:
+        logger.info(f"First result item type: {type(results[0])}")
+        logger.info(f"First result item dir: {dir(results[0])}")
 
-    if not result or not result[0]:
+    if not results:
         return ""
 
     texts = []
-    for line in result[0]:
-        if line and len(line) >= 2:
-            entry = line[1]
-            text = entry[0] if isinstance(entry, (list, tuple)) else str(entry)
-            texts.append(text)
+    for res in results:
+        # PaddleX/PaddleOCR results often have a 'rec_res' or similar for text
+        if hasattr(res, 'rec_res'):
+            for item in res.rec_res:
+                if 'text' in item:
+                    texts.append(item['text'])
+        elif isinstance(res, list):
+            # Fallback for older style list results
+            for line in res:
+                if line and len(line) >= 2:
+                    entry = line[1]
+                    text = entry[0] if isinstance(entry, (list, tuple)) else str(entry)
+                    texts.append(text)
 
     return "\n".join(texts)
 
@@ -264,12 +282,20 @@ async def process_video(session_id: str, config: ProcessConfig):
         # Setup OCR engine
         if config.ocr_engine == "paddle":
             if not PADDLEOCR_AVAILABLE:
-                raise Exception("PaddleOCR is not installed. Run: pip install paddleocr paddlepaddle")
+                state.error = "PaddleOCR not installed. Run 'pip install paddlepaddle paddleocr'."
+                state.active = False
+                return
             ocr_func = lambda f: ocr_with_paddle(f, config.language)
-        else:
+        elif config.ocr_engine == "tesseract":
             if not TESSERACT_AVAILABLE:
-                raise Exception("Tesseract is not installed. Install tesseract and pytesseract.")
+                state.error = "Tesseract OCR not found. Please install Tesseract-OCR."
+                state.active = False
+                return
             ocr_func = lambda f: ocr_with_tesseract(f, config.language)
+        else:
+            state.error = f"Unknown OCR engine: {config.ocr_engine}"
+            state.active = False
+            return
 
         prev_text = ""
         frame_counter = 0
@@ -514,6 +540,15 @@ async def cleanup(session_id: str):
         return {"status": "cleaned", "session_id": session_id}
     
     return JSONResponse({"error": "Session not found or already cleaned"}, status_code=404)
+
+
+@app.get("/")
+async def get_index():
+    """Serve the single-page application."""
+    index_path = BASE_DIR / "index.html"
+    if index_path.exists():
+        return FileResponse(index_path)
+    return JSONResponse({"error": "Frontend not found"}, status_code=404)
 
 
 if __name__ == "__main__":
