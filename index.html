@@ -256,6 +256,233 @@
 
         /* Utils */
         .hidden { display: none !important; }
+
+        /* Form Controls */
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .control-label span {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent);
+            font-size: 13px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent);
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .range-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+        }
+
+        .range-labels span {
+            font-size: 10px;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Estimation Block */
+        .stats-block {
+            background: rgba(1, 105, 111, 0.05);
+            border: 1px solid rgba(1, 105, 111, 0.2);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 24px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .stat-item:last-child { margin-bottom: 0; }
+
+        .stat-label { font-size: 13px; color: var(--text-secondary); }
+        .stat-value { font-size: 13px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+
+        .warning-badge {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--status-warning);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Collapsible Section */
+        .collapsible {
+            margin-top: 24px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 16px;
+        }
+
+        .collapsible-trigger {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 4px 0;
+        }
+
+        .collapsible-trigger .icon {
+            font-size: 12px;
+            transition: transform 0.2s;
+            opacity: 0.5;
+        }
+
+        .collapsible.active .collapsible-trigger .icon {
+            transform: rotate(90deg);
+        }
+
+        .collapsible-content {
+            display: none;
+            padding-top: 16px;
+        }
+
+        .collapsible.active .collapsible-content {
+            display: block;
+        }
+
+        /* Segmented Control */
+        .segmented-control {
+            display: flex;
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            padding: 2px;
+            gap: 2px;
+        }
+
+        .segment-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 12px;
+            padding: 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .segment-btn.active {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Toggles & Selects */
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .toggle-row label { font-size: 13px; }
+
+        select.form-select {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-primary);
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 120px;
+            outline: none;
+        }
+
+        /* Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 32px;
+            height: 18px;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255,255,255,0.1);
+            transition: .2s;
+            border-radius: 18px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px; width: 14px;
+            left: 2px; bottom: 2px;
+            background-color: white;
+            transition: .2s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider { background-color: var(--accent); }
+        input:checked + .slider:before { transform: translateX(14px); }
+
+        /* Process Button */
+        .btn-primary {
+            width: 100%;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -381,6 +608,7 @@
 
                     video.currentTime = time;
                     this.updateUI();
+                    UI.updateEstimation();
                 };
 
                 const onEnd = () => {
@@ -479,6 +707,175 @@
                     <div class="badge"><strong>FPS:</strong> ${meta.fps.toFixed(2)}</div>
                     <div class="badge"><strong>Size:</strong> ${(meta.size_bytes / (1024 * 1024)).toFixed(1)} MB</div>
                 `;
+            },
+
+            renderControls: () => {
+                const container = UI.el('controls-container');
+                container.classList.remove('controls-placeholder');
+                container.innerHTML = `
+                    <div class="control-group">
+                        <div class="control-label">
+                            Extraction FPS
+                            <span id="fps-value">${App.config.fps}</span>
+                        </div>
+                        <input type="range" id="fps-slider" min="0.5" max="30" step="0.5" value="${App.config.fps}" list="fps-stops">
+                        <datalist id="fps-stops">
+                            <option value="0.5"></option>
+                            <option value="1"></option>
+                            <option value="2"></option>
+                            <option value="5"></option>
+                            <option value="10"></option>
+                            <option value="15"></option>
+                            <option value="30"></option>
+                        </datalist>
+                        <div class="range-labels">
+                            <span>0.5</span>
+                            <span>5</span>
+                            <span>15</span>
+                            <span>30</span>
+                        </div>
+                    </div>
+
+                    <div class="stats-block">
+                        <div class="stat-item">
+                            <span class="stat-label">Est. Frames</span>
+                            <span class="stat-value" id="est-frames">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Est. Time</span>
+                            <span class="stat-value" id="est-time">0s</span>
+                        </div>
+                        <div id="frames-warning" class="warning-badge hidden">
+                            ⚠️ High frame count (>5000)
+                        </div>
+                    </div>
+
+                    <div class="collapsible" id="advanced-settings">
+                        <button class="collapsible-trigger" id="advanced-trigger">
+                            Advanced Extraction Settings
+                            <span class="icon">▶</span>
+                        </button>
+                        <div class="collapsible-content">
+                            <div class="control-group">
+                                <div class="control-label">
+                                    Blur Threshold
+                                    <span id="blur-value">${App.config.blurThreshold}</span>
+                                </div>
+                                <input type="range" id="blur-slider" min="0" max="300" step="10" value="${App.config.blurThreshold}">
+                                <div class="range-labels">
+                                    <span>Clear</span>
+                                    <span>Standard</span>
+                                    <span>Loose</span>
+                                </div>
+                            </div>
+
+                            <div class="control-group">
+                                <div class="control-label">OCR Engine</div>
+                                <div class="segmented-control">
+                                    <button class="segment-btn ${App.config.ocrEngine === 'paddle' ? 'active' : ''}" data-engine="paddle">PaddleOCR</button>
+                                    <button class="segment-btn ${App.config.ocrEngine === 'tesseract' ? 'active' : ''}" data-engine="tesseract">Tesseract</button>
+                                </div>
+                            </div>
+
+                            <div class="toggle-row">
+                                <label>Deduplication</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="dedupe-toggle" ${App.config.deduplicate ? 'checked' : ''}>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="toggle-row">
+                                <label>Language</label>
+                                <select class="form-select" id="lang-select">
+                                    <option value="en" ${App.config.language === 'en' ? 'selected' : ''}>English</option>
+                                    <option value="hi" ${App.config.language === 'hi' ? 'selected' : ''}>Hindi</option>
+                                    <option value="en+hi" ${App.config.language === 'en+hi' ? 'selected' : ''}>English + Hindi</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary" id="start-btn">
+                        <span>🚀 Start Extraction</span>
+                    </button>
+                `;
+
+                UI.setupControlListeners();
+                UI.updateEstimation();
+            },
+
+            setupControlListeners: () => {
+                // FPS Slider
+                const fpsSlider = UI.el('fps-slider');
+                fpsSlider.addEventListener('input', (e) => {
+                    App.config.fps = parseFloat(e.target.value);
+                    UI.el('fps-value').innerText = App.config.fps;
+                    UI.updateEstimation();
+                });
+
+                // Blur Slider
+                const blurSlider = UI.el('blur-slider');
+                blurSlider.addEventListener('input', (e) => {
+                    App.config.blurThreshold = parseInt(e.target.value);
+                    UI.el('blur-value').innerText = App.config.blurThreshold;
+                });
+
+                // OCR Engine
+                document.querySelectorAll('.segment-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        App.config.ocrEngine = btn.dataset.engine;
+                        document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        UI.updateEstimation();
+                    });
+                });
+
+                // Dedupe Toggle
+                UI.el('dedupe-toggle').addEventListener('change', (e) => {
+                    App.config.deduplicate = e.target.checked;
+                });
+
+                // Language Select
+                UI.el('lang-select').addEventListener('change', (e) => {
+                    App.config.language = e.target.value;
+                });
+
+                // Collapsible
+                UI.el('advanced-trigger').addEventListener('click', () => {
+                    UI.el('advanced-settings').classList.toggle('active');
+                });
+
+                // Start Button
+                UI.el('start-btn').addEventListener('click', () => {
+                    console.log('Starting with config:', App.config);
+                    // Next plan will implement this
+                });
+            },
+
+            updateEstimation: () => {
+                if (!App.metadata) return;
+
+                const duration = App.config.endTime - App.config.startTime;
+                const frameCount = Math.floor(duration * App.config.fps);
+                
+                // Heuristic: ~1.2s per frame for PaddleOCR, ~0.8s for Tesseract
+                const secPerFrame = App.config.ocrEngine === 'paddle' ? 1.2 : 0.8;
+                const estTimeSec = frameCount * secPerFrame;
+
+                UI.el('est-frames').innerText = frameCount.toLocaleString();
+                
+                if (estTimeSec < 60) {
+                    UI.el('est-time').innerText = `~${Math.round(estTimeSec)}s`;
+                } else {
+                    UI.el('est-time').innerText = `~${Math.round(estTimeSec / 60)}m`;
+                }
+
+                if (frameCount > 5000) {
+                    UI.show('frames-warning');
+                } else {
+                    UI.hide('frames-warning');
+                }
             }
         };
 
@@ -561,6 +958,7 @@
                 App.config.fps = Math.min(data.metadata.fps, 1); // Default to 1fps or native if lower
 
                 Timeline.updateUI();
+                UI.renderControls();
 
                 console.log('Upload success:', data);
             } catch (e) {
