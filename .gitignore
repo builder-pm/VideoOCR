@@ -1,0 +1,45 @@
+# Video files
+*.mp4
+*.avi
+*.mkv
+*.mov
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Logs
+*.log
+server.log
+
+# Temporary/Local files
+.env
+.venv
+venv/
+ENV/
+tmp_npm_test/
+tests/
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
