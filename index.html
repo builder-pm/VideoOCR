@@ -681,6 +681,7 @@
 
         const Processor = {
             eventSource: null,
+            cancelTimer: null,
             stats: {
                 processed: 0,
                 skipped: 0,
@@ -721,6 +722,7 @@
                     UI.el('sidebar').style.opacity = '0.5';
 
                     this.initSSE();
+                    this.initCancel();
                 } catch (e) {
                     console.error('Start processing failed', e);
                     UI.setStatus(`Failed to start: ${e.message}`, 'destructive');
@@ -748,9 +750,56 @@
 
                 this.eventSource.onerror = (e) => {
                     console.error('SSE Error', e);
-                    // Don't immediately error out, the browser might reconnect
-                    // or the server might have just finished.
                 };
+            },
+
+            initCancel() {
+                const cancelBtn = UI.el('cancel-btn');
+                cancelBtn.innerText = 'Cancel Extraction';
+                cancelBtn.onclick = () => {
+                    if (this.cancelTimer) {
+                        this.cancel();
+                    } else {
+                        cancelBtn.innerText = 'Confirm Cancel?';
+                        cancelBtn.classList.add('confirming');
+                        this.cancelTimer = setTimeout(() => {
+                            cancelBtn.innerText = 'Cancel Extraction';
+                            cancelBtn.classList.remove('confirming');
+                            this.cancelTimer = null;
+                        }, 3000);
+                    }
+                };
+            },
+
+            async cancel() {
+                if (this.cancelTimer) clearTimeout(this.cancelTimer);
+                this.cancelTimer = null;
+                
+                try {
+                    await API.cancelProcessing(App.sessionId);
+                    if (this.eventSource) this.eventSource.close();
+                    
+                    App.status = 'ready';
+                    UI.el('process-status').innerText = 'Extraction Cancelled';
+                    UI.el('progress-bar-fill').style.backgroundColor = 'var(--status-warning)';
+                    
+                    // Unlock sidebar
+                    UI.el('sidebar').style.pointerEvents = 'auto';
+                    UI.el('sidebar').style.opacity = '1';
+                    
+                    UI.setStatus('Extraction cancelled by user', 'warning');
+                    
+                    // Option to return to preview
+                    setTimeout(() => {
+                        if (confirm('Extraction cancelled. Return to preview?')) {
+                            UI.hide('main-output');
+                            UI.show('preview-panel');
+                        }
+                    }, 500);
+                } catch (e) {
+                    console.error('Cancel failed', e);
+                    UI.setStatus('Failed to cancel: ' + e.message, 'destructive');
+                }
             },
 
             updateProgress(data) {
@@ -1131,6 +1180,13 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(config)
+                });
+                return await resp.json();
+            },
+
+            async cancelProcessing(sessionId) {
+                const resp = await fetch(`/cancel?session_id=${sessionId}`, {
+                    method: 'POST'
                 });
                 return await resp.json();
             },
