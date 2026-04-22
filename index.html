@@ -147,6 +147,97 @@
             margin-right: 4px;
         }
 
+        /* Timeline Styles */
+        .timeline-container {
+            margin-top: 16px;
+            padding: 20px 0 40px;
+        }
+
+        .timeline-track {
+            height: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .timeline-progress {
+            position: absolute;
+            height: 100%;
+            background: var(--accent);
+            opacity: 0.3;
+            border-radius: 4px;
+        }
+
+        .timeline-handle {
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            cursor: grab;
+            z-index: 10;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .timeline-handle:active {
+            cursor: grabbing;
+            transform: translate(-50%, -50%) scale(1.2);
+            box-shadow: 0 0 10px rgba(1, 105, 111, 0.5);
+        }
+
+        .timeline-handle::after {
+            content: attr(data-time);
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-panel);
+            color: var(--text-primary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            border: 1px solid rgba(255,255,255,0.1);
+            white-space: nowrap;
+        }
+
+        .timeline-handle.handle-end::after {
+            top: 20px;
+        }
+
+        /* Range Presets */
+        .preset-bar {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .preset-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-secondary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preset-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+        }
+
+        .preset-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
         /* Spinner */
         .spinner {
             width: 40px;
@@ -216,6 +307,20 @@
                 <div class="metadata-bar" id="metadata-bar">
                     <!-- Badges injected by JS -->
                 </div>
+
+                <div class="timeline-container">
+                    <div id="timeline-track" class="timeline-track">
+                        <div id="timeline-progress" class="timeline-progress"></div>
+                        <div id="handle-start" class="timeline-handle handle-start" data-time="00:00"></div>
+                        <div id="handle-end" class="timeline-handle handle-end" data-time="00:00"></div>
+                    </div>
+                    
+                    <div class="preset-bar">
+                        <button class="preset-btn" data-preset="2m">First 2m</button>
+                        <button class="preset-btn" data-preset="5m">First 5m</button>
+                        <button class="preset-btn" data-preset="full">Full Video</button>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -239,6 +344,106 @@
                 language: 'en'
             },
             status: 'idle', // 'idle', 'uploading', 'ready', 'processing', 'completed', 'error'
+        };
+
+        const Timeline = {
+            activeHandle: null,
+            
+            init() {
+                const track = UI.el('timeline-track');
+                const handleStart = UI.el('handle-start');
+                const handleEnd = UI.el('handle-end');
+                const video = UI.el('video-preview');
+
+                const onMove = (e) => {
+                    if (!this.activeHandle) return;
+                    
+                    const rect = track.getBoundingClientRect();
+                    const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+                    let percent = Math.max(0, Math.min(100, (x / rect.width) * 100));
+                    
+                    const duration = App.metadata.duration;
+                    let time = (percent / 100) * duration;
+
+                    if (this.activeHandle.id === 'handle-start') {
+                        if (time >= App.config.endTime) {
+                            time = App.config.endTime - 0.1;
+                            percent = (time / duration) * 100;
+                        }
+                        App.config.startTime = time;
+                    } else {
+                        if (time <= App.config.startTime) {
+                            time = App.config.startTime + 0.1;
+                            percent = (time / duration) * 100;
+                        }
+                        App.config.endTime = time;
+                    }
+
+                    video.currentTime = time;
+                    this.updateUI();
+                };
+
+                const onEnd = () => {
+                    this.activeHandle = null;
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onEnd);
+                    document.removeEventListener('touchmove', onMove);
+                    document.removeEventListener('touchend', onEnd);
+                };
+
+                const onStart = (e, handle) => {
+                    e.preventDefault();
+                    this.activeHandle = handle;
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onEnd);
+                    document.addEventListener('touchmove', onMove);
+                    document.addEventListener('touchend', onEnd);
+                };
+
+                handleStart.addEventListener('mousedown', (e) => onStart(e, handleStart));
+                handleStart.addEventListener('touchstart', (e) => onStart(e, handleStart));
+                
+                handleEnd.addEventListener('mousedown', (e) => onStart(e, handleEnd));
+                handleEnd.addEventListener('touchstart', (e) => onStart(e, handleEnd));
+
+                // Presets
+                document.querySelectorAll('.preset-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const preset = btn.dataset.preset;
+                        const duration = App.metadata.duration;
+                        
+                        App.config.startTime = 0;
+                        if (preset === '2m') App.config.endTime = Math.min(120, duration);
+                        else if (preset === '5m') App.config.endTime = Math.min(300, duration);
+                        else if (preset === 'full') App.config.endTime = duration;
+                        
+                        this.updateUI();
+                        video.currentTime = App.config.startTime;
+
+                        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                    });
+                });
+            },
+
+            updateUI() {
+                const duration = App.metadata.duration;
+                const startPct = (App.config.startTime / duration) * 100;
+                const endPct = (App.config.endTime / duration) * 100;
+
+                const handleStart = UI.el('handle-start');
+                const handleEnd = UI.el('handle-end');
+                const progress = UI.el('timeline-progress');
+
+                handleStart.style.left = `${startPct}%`;
+                handleStart.setAttribute('data-time', UI.formatTime(App.config.startTime));
+                
+                handleEnd.style.left = `${endPct}%`;
+                handleEnd.setAttribute('data-time', UI.formatTime(App.config.endTime));
+
+                progress.style.left = `${startPct}%`;
+                progress.style.width = `${endPct - startPct}%`;
+            }
         };
 
         const UI = {
@@ -351,8 +556,11 @@
                 UI.setStatus('Video ready for processing', 'success');
                 
                 // Update config defaults from metadata
+                App.config.startTime = 0;
                 App.config.endTime = data.metadata.duration;
                 App.config.fps = Math.min(data.metadata.fps, 1); // Default to 1fps or native if lower
+
+                Timeline.updateUI();
 
                 console.log('Upload success:', data);
             } catch (e) {
@@ -379,6 +587,8 @@
             } else {
                 UI.setStatus('Backend unreachable', 'destructive');
             }
+
+            Timeline.init();
             
             // Setup Upload triggers
             const uploadPanel = UI.el('upload-panel');
