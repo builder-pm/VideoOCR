@@ -51,7 +51,7 @@ The API will be available at `http://localhost:8000`.
 
 Run the automated test suite:
 ```bash
-pytest tests/test_backend.py
+pytest tests/test_server.py
 ```
 
 Or run the real-world video verification script:
