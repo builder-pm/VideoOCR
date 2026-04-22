@@ -63,8 +63,8 @@
 9. Advanced options panel is collapsible and includes blur threshold slider, OCR engine toggle, language selector, deduplication toggle
 
 **Plans:**
-- [ ] 02-01-PLAN.md — SPA Shell & Foundation
-- [ ] 02-02-PLAN.md — Upload Flow & Metadata
+- [x] 02-01-PLAN.md — SPA Shell & Foundation
+- [x] 02-02-PLAN.md — Upload Flow & Metadata
 - [ ] 02-03-PLAN.md — Timeline Range Selector
 - [ ] 02-04-PLAN.md — Config Controls & Estimation
 
@@ -127,7 +127,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Backend Foundation | 3/3 | Completed | 2026-04-22 |
-| 2. Frontend Core | 0/4 | In progress | - |
+| 2. Frontend Core | 2/4 | In progress | - |
 | 3. Processing Pipeline | 0/TBD | Not started | - |
 | 4. Output & Polish | 0/TBD | Not started | - |
 

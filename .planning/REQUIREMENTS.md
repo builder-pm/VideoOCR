@@ -43,10 +43,14 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Frontend - Upload Panel
 
-- [ ] **FRONT-01**: Drag-and-drop video upload area
-- [ ] **FRONT-02**: Click-to-upload fallback
-- [ ] **FRONT-03**: Show video thumbnail preview after upload
-- [ ] **FRONT-04**: Display video metadata: duration, resolution, detected FPS
+- [x] **FRONT-01
+**: Drag-and-drop video upload area
+- [x] **FRONT-02
+**: Click-to-upload fallback
+- [x] **FRONT-03
+**: Show video thumbnail preview after upload
+- [x] **FRONT-04
+**: Display video metadata: duration, resolution, detected FPS
 
 ### Frontend - Video Range Selector
 
