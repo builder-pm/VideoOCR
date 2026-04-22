@@ -150,13 +150,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | BACK-01 to BACK-22 | Phase 1: Backend Foundation | Pending |
-| FRONT-01 to FRONT-04 | Phase 2: Frontend Core - Upload | Pending |
-| FRONT-05 to FRONT-09 | Phase 3: Frontend - Timeline | Pending |
-| FRONT-10 to FRONT-18 | Phase 4: Frontend - Controls | Pending |
-| FRONT-19 to FRONT-25 | Phase 5: Processing Pipeline | Pending |
-| FRONT-26 to FRONT-32 | Phase 6: Output Panel | Pending |
-| FRONT-33 to FRONT-39 | Phase 7: Design Polish | Pending |
 | DOCS-01 to DOCS-02 | Phase 1: Backend Foundation | Pending |
+| FRONT-01 to FRONT-18 | Phase 2: Frontend Core | Pending |
+| FRONT-19 to FRONT-32 | Phase 3: Processing Pipeline | Pending |
+| FRONT-33 to FRONT-39 | Phase 4: Output & Polish | Pending |
 
 **Coverage:**
 - v1 requirements: 57 total
@@ -165,4 +162,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-22*
-*Last updated: 2026-04-22 after initial definition*
+*Last updated: 2026-04-22 after roadmap creation (consolidated to 4 phases)*
