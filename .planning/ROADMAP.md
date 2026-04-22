@@ -27,16 +27,19 @@
 **Success Criteria** (what must be TRUE):
 1. User can upload .mp4, .mov, .avi, .webm video files via POST /upload and receive session ID
 2. User receives file size warning (>2GB) or duration warning (>60min) if applicable
-3. API returns video metadata (duration, resolution, FPS) after successful upload
+3. API returns video metadata (duration, resolution, FPS) after successful upload   
 4. Backend extracts frames at configurable FPS using FFmpeg subprocess within time range
 5. Blur detection (Laplacian variance) filters out blurry frames below configurable threshold
-6. OCR runs on remaining frames using PaddleOCR (primary) or Tesseract (fallback)
+6. OCR runs on remaining frames using PaddleOCR (primary) or Tesseract (fallback)   
 7. Deduplication removes consecutive frames with <10% text change
 8. Processing progress streams to client via GET /progress SSE endpoint with heartbeat
 9. User can browse extracted frames via GET /frame/{frame_number}
 10. Errors return friendly messages for missing FFmpeg, unsupported codec, or missing OCR engine
 
-**Plans:** TBD
+**Plans:**
+- [ ] 01-01-PLAN.md — Session & SSE Refactor
+- [ ] 01-02-PLAN.md — Pipeline Robustness & Error Handling
+- [ ] 01-03-PLAN.md — Testing & Documentation
 
 ---
 
@@ -53,7 +56,7 @@
 2. Uploaded video shows thumbnail preview and displays metadata (duration, resolution, FPS)
 3. User can scrub through video using interactive timeline with START/END draggable handles
 4. Timeline shows real-time timecode (MM:SS) and preview thumbnail updates during scrubbing
-5. User can select quick presets: "First 2 min", "First 5 min", "Full video"
+5. User can select quick presets: "First 2 min", "First 5 min", "Full video"        
 6. User can adjust frame rate via horizontal slider (0.5-30fps) with labeled stops at 0.5, 1, 2, 5, 10, 15, 30
 7. Estimated frame count and processing time update in real-time based on slider position
 8. Warning badge appears when frame count exceeds 5000
@@ -81,10 +84,10 @@
 5. Extracted text scrolls live in output panel (auto-scrolls to bottom)
 6. User can cancel processing mid-execution
 7. Frame browser shows vertical strip of thumbnails with sharpness score badges (green/yellow/red)
-8. Clicking a frame thumbnail highlights it and shows extracted text in context
+8. Clicking a frame thumbnail highlights it and shows extracted text in context     
 9. Full text output is editable for user corrections
 10. Export options available: Copy All Text, .txt, .md, .docx
-11. "Re-process selected range" button allows reprocessing with different settings
+11. "Re-process selected range" button allows reprocessing with different settings  
 
 **Plans:** TBD
 
@@ -94,7 +97,7 @@
 
 ### Phase 4: Output & Polish
 
-**Goal:** Application has professional visual design with working documentation
+**Goal:** Application has professional visual design with working documentation     
 
 **Depends on:** Phase 3
 
@@ -108,7 +111,7 @@
 5. Layout follows: left sidebar for controls, main content area for output
 6. Frame thumbnails have film-strip aesthetic styling
 7. Panel state changes animate with smooth transitions
-8. README.md documents prerequisites, installation steps, and run instructions
+8. README.md documents prerequisites, installation steps, and run instructions      
 9. requirements.txt lists all Python dependencies with correct versions
 
 **Plans:** TBD
@@ -119,7 +122,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Backend Foundation | 0/10 | Not started | - |
+| 1. Backend Foundation | 0/3 | Not started | - |
 | 2. Frontend Core | 0/9 | Not started | - |
 | 3. Processing Pipeline | 0/11 | Not started | - |
 | 4. Output & Polish | 0/9 | Not started | - |
@@ -140,3 +143,4 @@
 ---
 
 *Roadmap created: 2026-04-22*
+*Roadmap updated: 2026-04-22 (Phase 1 plans added)*
