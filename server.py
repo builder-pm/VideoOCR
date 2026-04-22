@@ -5,7 +5,7 @@ import subprocess
 import json
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List, Dict
 from concurrent.futures import ThreadPoolExecutor
 
 import cv2
@@ -43,32 +43,46 @@ app.add_middleware(
 
 # Directory setup
 BASE_DIR = Path(__file__).parent
-UPLOAD_DIR = BASE_DIR / "uploads"
-FRAMES_DIR = BASE_DIR / "frames"
-UPLOAD_DIR.mkdir(exist_ok=True)
-FRAMES_DIR.mkdir(exist_ok=True)
+SESSIONS_DIR = BASE_DIR / "sessions"
+SESSIONS_DIR.mkdir(exist_ok=True)
 
-# Global state
-processing_state = {
-    "active": False,
-    "progress": 0,
-    "current_frame": 0,
-    "total_frames": 0,
-    "skipped_blur": 0,
-    "text_blocks": [],
-    "cancel_requested": False,
-    "error": None,
-    "video_path": None,
-    "config": None,
-    "language": "en",
-    "session_dir": None,
-}
+class SessionState(BaseModel):
+    session_id: str
+    active: bool = False
+    progress: int = 0
+    current_frame: int = 0
+    total_frames: int = 0
+    skipped_blur: int = 0
+    text_blocks: List[Dict] = []
+    cancel_requested: bool = False
+    error: Optional[str] = None
+    video_path: Optional[str] = None
+    config: Optional[dict] = None
+    language: str = "en"
+    session_dir: Optional[str] = None
 
-executor = ThreadPoolExecutor(max_workers=2)
+class SessionManager:
+    def __init__(self):
+        self.sessions: Dict[str, SessionState] = {}
+
+    def get_session(self, session_id: str) -> Optional[SessionState]:
+        return self.sessions.get(session_id)
+
+    def create_session(self, session_id: str, session_dir: str) -> SessionState:
+        state = SessionState(session_id=session_id, session_dir=session_dir)
+        self.sessions[session_id] = state
+        return state
+
+    def remove_session(self, session_id: str):
+        if session_id in self.sessions:
+            del self.sessions[session_id]
+
+session_manager = SessionManager()
+executor = ThreadPoolExecutor(max_workers=4)
 
 
 class ProcessConfig(BaseModel):
-    video_path: str
+    session_id: str
     start_time: float
     end_time: float
     fps: float
@@ -189,38 +203,40 @@ def is_similar_text(text1: str, text2: str, threshold: float = 0.1) -> bool:
     return ratio > (1 - threshold)
 
 
-async def process_video(config: ProcessConfig):
+async def process_video(session_id: str, config: ProcessConfig):
     """Async processing of video frames."""
-    global processing_state
+    state = session_manager.get_session(session_id)
+    if not state:
+        return
 
     try:
-        processing_state["active"] = True
-        processing_state["progress"] = 0
-        processing_state["current_frame"] = 0
-        processing_state["skipped_blur"] = 0
-        processing_state["text_blocks"] = []
-        processing_state["cancel_requested"] = False
-        processing_state["error"] = None
-        processing_state["language"] = config.language
+        state.active = True
+        state.progress = 0
+        state.current_frame = 0
+        state.skipped_blur = 0
+        state.text_blocks = []
+        state.cancel_requested = False
+        state.error = None
+        state.language = config.language
+        state.config = config.model_dump()
 
-        session_dir = FRAMES_DIR / str(uuid.uuid4())
-        session_dir.mkdir(exist_ok=True)
-        processing_state["session_dir"] = str(session_dir)
+        frames_dir = Path(state.session_dir) / "frames"
+        frames_dir.mkdir(exist_ok=True)
 
         # Extract frames
         frames = extract_frames(
-            config.video_path,
+            state.video_path,
             config.start_time,
             config.end_time,
             config.fps,
-            str(session_dir)
+            str(frames_dir)
         )
 
-        processing_state["total_frames"] = len(frames)
+        state.total_frames = len(frames)
 
         if len(frames) == 0:
-            processing_state["active"] = False
-            processing_state["error"] = "No frames extracted. Check video and settings."
+            state.active = False
+            state.error = "No frames extracted. Check video and settings."
             return
 
         # Setup OCR engine
@@ -237,22 +253,22 @@ async def process_video(config: ProcessConfig):
         frame_counter = 0
 
         for i, frame_path in enumerate(frames):
-            if processing_state["cancel_requested"]:
+            if state.cancel_requested:
                 break
 
             # Check blur
             img = cv2.imread(frame_path)
             if img is None:
-                processing_state["current_frame"] = i + 1
-                processing_state["progress"] = int((i + 1) / len(frames) * 100)
+                state.current_frame = i + 1
+                state.progress = int((i + 1) / len(frames) * 100)
                 continue
 
             sharpness = calculate_laplacian_variance(img)
 
             if sharpness < config.blur_threshold:
-                processing_state["skipped_blur"] += 1
-                processing_state["current_frame"] = i + 1
-                processing_state["progress"] = int((i + 1) / len(frames) * 100)
+                state.skipped_blur += 1
+                state.current_frame = i + 1
+                state.progress = int((i + 1) / len(frames) * 100)
                 continue
 
             # Run OCR
@@ -263,8 +279,8 @@ async def process_video(config: ProcessConfig):
 
             # Deduplicate if enabled
             if config.deduplicate and is_similar_text(prev_text, text):
-                processing_state["current_frame"] = i + 1
-                processing_state["progress"] = int((i + 1) / len(frames) * 100)
+                state.current_frame = i + 1
+                state.progress = int((i + 1) / len(frames) * 100)
                 continue
 
             frame_counter += 1
@@ -275,24 +291,24 @@ async def process_video(config: ProcessConfig):
                 "timestamp": round(timestamp, 3),
                 "text": text,
                 "sharpness_score": round(sharpness, 2),
-                "frame_index": i + 1,
+                "frame_index": int(Path(frame_path).stem.split("_")[1]),
                 "frame_path": frame_path,
             }
 
-            processing_state["text_blocks"].append(block)
+            state.text_blocks.append(block)
             prev_text = text
 
-            processing_state["current_frame"] = i + 1
-            processing_state["progress"] = int((i + 1) / len(frames) * 100)
+            state.current_frame = i + 1
+            state.progress = int((i + 1) / len(frames) * 100)
 
             await asyncio.sleep(0.001)
 
-        processing_state["active"] = False
-        processing_state["progress"] = 100
+        state.active = False
+        state.progress = 100
 
     except Exception as e:
-        processing_state["active"] = False
-        processing_state["error"] = str(e)
+        state.active = False
+        state.error = str(e)
 
 
 @app.post("/upload")
@@ -305,88 +321,101 @@ async def upload_video(file: UploadFile = File(...)):
     if ext not in [".mp4", ".mov", ".avi", ".webm"]:
         return JSONResponse({"error": f"Unsupported format: {ext}. Use mp4, mov, avi, or webm."}, status_code=400)
 
-    file_id = str(uuid.uuid4())
-    file_path = UPLOAD_DIR / f"{file_id}{ext}"
+    session_id = str(uuid.uuid4())
+    session_dir = SESSIONS_DIR / session_id
+    session_dir.mkdir(parents=True, exist_ok=True)
+    
+    video_path = session_dir / f"video{ext}"
 
-    with open(file_path, "wb") as f:
+    with open(video_path, "wb") as f:
         content = await file.read()
         f.write(content)
 
     try:
-        metadata = get_video_metadata(str(file_path))
+        metadata = get_video_metadata(str(video_path))
 
         if metadata["duration"] > 3600:
-            os.remove(file_path)
+            shutil.rmtree(session_dir)
             return JSONResponse({
                 "error": "Video too long. Maximum duration is 60 minutes.",
             }, status_code=400)
 
+        session_manager.create_session(session_id, str(session_dir))
+        session_manager.sessions[session_id].video_path = str(video_path)
+
         return {
-            "file_path": str(file_path),
-            "file_id": file_id,
+            "session_id": session_id,
             "metadata": metadata
         }
     except HTTPException:
+        if session_dir.exists():
+            shutil.rmtree(session_dir)
         raise
     except Exception as e:
-        if file_path.exists():
-            os.remove(file_path)
+        if session_dir.exists():
+            shutil.rmtree(session_dir)
         return JSONResponse({"error": str(e)}, status_code=400)
 
 
 @app.post("/process")
 async def process_video_endpoint(config: ProcessConfig):
     """Start video processing."""
-    global processing_state
+    state = session_manager.get_session(config.session_id)
+    if not state:
+        return JSONResponse({"error": "Session not found"}, status_code=404)
 
-    if processing_state["active"]:
-        return JSONResponse({"error": "Processing already in progress"}, status_code=409)
+    if state.active:
+        return JSONResponse({"error": "Processing already in progress for this session"}, status_code=409)
 
-    if not os.path.exists(config.video_path):
+    if not state.video_path or not os.path.exists(state.video_path):
         return JSONResponse({"error": "Video file not found"}, status_code=404)
 
-    # Reset state
-    processing_state["video_path"] = config.video_path
-    processing_state["config"] = config.model_dump()
-
     # Run processing in background
-    asyncio.create_task(process_video(config))
+    asyncio.create_task(process_video(config.session_id, config))
 
-    return {"status": "started", "message": "Processing started"}
+    return {"status": "started", "message": "Processing started", "session_id": config.session_id}
 
 
 @app.get("/progress")
-async def get_progress():
+async def get_progress(session_id: str):
     """Get current processing progress."""
+    state = session_manager.get_session(session_id)
+    if not state:
+        return JSONResponse({"error": "Session not found"}, status_code=404)
+
     return {
-        "active": processing_state["active"],
-        "progress": processing_state["progress"],
-        "current_frame": processing_state["current_frame"],
-        "total_frames": processing_state["total_frames"],
-        "skipped_blur": processing_state["skipped_blur"],
+        "active": state.active,
+        "progress": state.progress,
+        "current_frame": state.current_frame,
+        "total_frames": state.total_frames,
+        "skipped_blur": state.skipped_blur,
         "text_blocks": [
             {k: v for k, v in b.items() if k != "frame_path"}
-            for b in processing_state["text_blocks"]
+            for b in state.text_blocks
         ],
-        "error": processing_state["error"],
+        "error": state.error,
     }
 
 
 @app.post("/cancel")
-async def cancel_processing():
+async def cancel_processing(session_id: str):
     """Cancel current processing."""
-    processing_state["cancel_requested"] = True
-    return {"status": "cancelled"}
+    state = session_manager.get_session(session_id)
+    if not state:
+        return JSONResponse({"error": "Session not found"}, status_code=404)
+        
+    state.cancel_requested = True
+    return {"status": "cancelled", "session_id": session_id}
 
 
-@app.get("/frames/{frame_index}")
-async def get_frame(frame_index: int):
+@app.get("/frames/{session_id}/{frame_index}")
+async def get_frame(session_id: str, frame_index: int):
     """Get a specific frame image."""
-    session_dir = processing_state.get("session_dir")
-    if not session_dir:
-        return JSONResponse({"error": "No active session"}, status_code=404)
+    state = session_manager.get_session(session_id)
+    if not state:
+        return JSONResponse({"error": "Session not found"}, status_code=404)
 
-    frame_path = Path(session_dir) / f"frame_{frame_index:05d}.jpg"
+    frame_path = Path(state.session_dir) / "frames" / f"frame_{frame_index:05d}.jpg"
     if frame_path.exists():
         return FileResponse(frame_path)
 
@@ -394,13 +423,17 @@ async def get_frame(frame_index: int):
 
 
 @app.get("/results")
-async def get_results():
+async def get_results(session_id: str):
     """Get final processing results."""
+    state = session_manager.get_session(session_id)
+    if not state:
+        return JSONResponse({"error": "Session not found"}, status_code=404)
+
     results = [
         {k: v for k, v in b.items() if k != "frame_path"}
-        for b in processing_state["text_blocks"]
+        for b in state.text_blocks
     ]
-    return {"results": results}
+    return {"results": results, "session_id": session_id}
 
 
 @app.get("/status")
@@ -416,14 +449,15 @@ async def get_status():
 
 
 @app.delete("/cleanup")
-async def cleanup():
-    """Clean up session frames."""
-    session_dir = processing_state.get("session_dir")
-    if session_dir and Path(session_dir).exists():
-        shutil.rmtree(session_dir)
-    processing_state["session_dir"] = None
-    processing_state["text_blocks"] = []
-    return {"status": "cleaned"}
+async def cleanup(session_id: str):
+    """Clean up session data."""
+    state = session_manager.get_session(session_id)
+    if state and state.session_dir and Path(state.session_dir).exists():
+        shutil.rmtree(state.session_dir)
+        session_manager.remove_session(session_id)
+        return {"status": "cleaned", "session_id": session_id}
+    
+    return JSONResponse({"error": "Session not found or already cleaned"}, status_code=404)
 
 
 if __name__ == "__main__":
