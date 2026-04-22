@@ -73,16 +73,22 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Frontend - Process Controls
 
-- [ ] **FRONT-19**: Large "Extract Text" primary button
-- [ ] **FRONT-20**: Disabled state during processing with spinner
-- [ ] **FRONT-21**: Show "Processing frame X of Y" status during extraction
+- [x] **FRONT-19
+**: Large "Extract Text" primary button
+- [x] **FRONT-20
+**: Disabled state during processing with spinner
+- [x] **FRONT-21
+**: Show "Processing frame X of Y" status during extraction
 
 ### Frontend - Progress Panel
 
-- [ ] **FRONT-22**: Animated progress bar
-- [ ] **FRONT-23**: Live stats: Frames Processed | Frames Skipped | Text Blocks Found
+- [x] **FRONT-22
+**: Animated progress bar
+- [x] **FRONT-23
+**: Live stats: Frames Processed | Frames Skipped | Text Blocks Found
 - [ ] **FRONT-24**: Scrollable live text output (auto-scrolls to bottom)
-- [ ] **FRONT-25**: Cancel button to abort processing
+- [x] **FRONT-25
+**: Cancel button to abort processing
 
 ### Frontend - Output Validation Panel
 
