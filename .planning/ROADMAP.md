@@ -8,7 +8,7 @@
 ## Phases
 
 - [x] **Phase 1: Backend Foundation** - Core backend API, upload, frame extraction, SSE streaming, error handling
-- [ ] **Phase 2: Frontend Core** - Upload panel, video preview, timeline scrubber, frame rate controls, advanced options
+- [x] **Phase 2: Frontend Core** - Upload panel, video preview, timeline scrubber, frame rate controls, advanced options
 - [ ] **Phase 3: Processing Pipeline** - Process controls, progress display, output validation, frame browser, export
 - [ ] **Phase 4: Output & Polish** - Design system, dark/light mode, typography, layout polish, documentation
 
@@ -66,7 +66,7 @@
 - [x] 02-01-PLAN.md — SPA Shell & Foundation
 - [x] 02-02-PLAN.md — Upload Flow & Metadata
 - [x] 02-03-PLAN.md — Timeline Range Selector
-- [ ] 02-04-PLAN.md — Config Controls & Estimation
+- [x] 02-04-PLAN.md — Config Controls & Estimation
 
 **UI hint:** yes
 
@@ -127,7 +127,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Backend Foundation | 3/3 | Completed | 2026-04-22 |
-| 2. Frontend Core | 3/4 | In progress | - |
+| 2. Frontend Core | 4/4 | Completed | 2026-04-22 |
 | 3. Processing Pipeline | 0/TBD | Not started | - |
 | 4. Output & Polish | 0/TBD | Not started | - |
 
@@ -147,4 +147,4 @@
 ---
 
 *Roadmap created: 2026-04-22*
-*Roadmap updated: 2026-04-22 (Phase 1 completed, Phase 2 plans added)*
+*Roadmap updated: 2026-04-22 (Phase 2 completed)*
