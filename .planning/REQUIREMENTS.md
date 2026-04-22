@@ -1,0 +1,168 @@
+# Requirements: VideoOCR Studio
+
+**Defined:** 2026-04-22
+**Core Value:** Users can extract readable text from video recordings of documents (scrolling lectures, whiteboard videos, scanned page videos) using configurable OCR with frame quality filtering and deduplication.
+
+## v1 Requirements
+
+Requirements for initial release. Each maps to roadmap phases.
+
+### Backend - Upload & Storage
+
+- [ ] **BACK-01**: Accept video file upload via POST /upload endpoint
+- [ ] **BACK-02**: Validate video file format (.mp4, .mov, .avi, .webm)
+- [ ] **BACK-03**: Store uploaded video in temp directory with unique session ID
+- [ ] **BACK-04**: Return video metadata (duration, resolution, FPS) after upload
+- [ ] **BACK-05**: Warn if file exceeds 2GB
+- [ ] **BACK-06**: Warn if video duration exceeds 60 minutes
+
+### Backend - Frame Extraction
+
+- [ ] **BACK-07**: Accept processing config via POST /process with all parameters
+- [ ] **BACK-08**: Use FFmpeg subprocess to extract frames at specified FPS within time range
+- [ ] **BACK-09**: Score frames for sharpness using OpenCV Laplacian variance
+- [ ] **BACK-10**: Skip frames below blur threshold (configurable, default 100)
+- [ ] **BACK-11**: Run PaddleOCR (primary) or Tesseract (fallback) on remaining frames
+- [ ] **BACK-12**: Deduplicate consecutive frames with <10% text change using difflib
+- [ ] **BACK-13**: Return structured JSON: list of {frame_number, timestamp, text, sharpness_score}
+- [ ] **BACK-14**: Serve frame images via GET /frame/{frame_number} endpoint
+
+### Backend - Progress Streaming
+
+- [ ] **BACK-15**: Stream progress via GET /progress using SSE
+- [ ] **BACK-16**: Include percent done, current frame number, frames skipped, extracted text
+- [ ] **BACK-17**: Implement heartbeat to prevent SSE stalls
+- [ ] **BACK-18**: Return terminal event (complete/failed) when processing ends
+
+### Backend - Error Handling
+
+- [ ] **BACK-19**: Detect and report FFmpeg not found
+- [ ] **BACK-20**: Detect and report unsupported video codec
+- [ ] **BACK-21**: Detect and report OCR engine not installed
+- [ ] **BACK-22**: Return user-friendly error messages (not raw stack traces)
+
+### Frontend - Upload Panel
+
+- [ ] **FRONT-01**: Drag-and-drop video upload area
+- [ ] **FRONT-02**: Click-to-upload fallback
+- [ ] **FRONT-03**: Show video thumbnail preview after upload
+- [ ] **FRONT-04**: Display video metadata: duration, resolution, detected FPS
+
+### Frontend - Video Range Selector
+
+- [ ] **FRONT-05**: Interactive timeline scrubber showing full video duration
+- [ ] **FRONT-06**: Two draggable handles for START and END time markers
+- [ ] **FRONT-07**: Real-time timecode display (MM:SS) for both handles
+- [ ] **FRONT-08**: Preview frame thumbnail that updates during scrubbing
+- [ ] **FRONT-09**: Quick presets: "First 2 min", "First 5 min", "Full video"
+
+### Frontend - Frame Rate Selector
+
+- [ ] **FRONT-10**: Horizontal slider from 0.5 fps to 30 fps
+- [ ] **FRONT-11**: Labeled stops at 0.5, 1, 2, 5, 10, 15, 30
+- [ ] **FRONT-12**: Show estimated frame count and processing time
+- [ ] **FRONT-13**: Warning badge when frame count exceeds 5000
+
+### Frontend - Advanced Options
+
+- [ ] **FRONT-14**: Blur threshold slider (0-300, default 100) with label
+- [ ] **FRONT-15**: OCR engine toggle: PaddleOCR vs Tesseract
+- [ ] **FRONT-16**: Deduplicate toggle (on by default)
+- [ ] **FRONT-17**: Language selector dropdown (English, Hindi, English+Hindi)
+- [ ] **FRONT-18**: Collapsible advanced options section
+
+### Frontend - Process Controls
+
+- [ ] **FRONT-19**: Large "Extract Text" primary button
+- [ ] **FRONT-20**: Disabled state during processing with spinner
+- [ ] **FRONT-21**: Show "Processing frame X of Y" status during extraction
+
+### Frontend - Progress Panel
+
+- [ ] **FRONT-22**: Animated progress bar
+- [ ] **FRONT-23**: Live stats: Frames Processed | Frames Skipped | Text Blocks Found
+- [ ] **FRONT-24**: Scrollable live text output (auto-scrolls to bottom)
+- [ ] **FRONT-25**: Cancel button to abort processing
+
+### Frontend - Output Validation Panel
+
+- [ ] **FRONT-26**: Split view: Frame Browser (left) + Text Output (right)
+- [ ] **FRONT-27**: Vertical strip of thumbnail images from /frame/{n}
+- [ ] **FRONT-28**: Click frame to highlight and show its extracted text
+- [ ] **FRONT-29**: Editable full text area for user corrections
+- [ ] **FRONT-30**: Sharpness score badge on thumbnails (green=sharp, yellow=ok, red=blurry)
+- [ ] **FRONT-31**: Export options: Copy All Text, .txt, .md, .docx
+- [ ] **FRONT-32**: "Re-process selected range" button
+
+### Frontend - Design
+
+- [ ] **FRONT-33**: Dark-mode first with light mode toggle
+- [ ] **FRONT-34**: Color scheme: deep dark surfaces (#0f0e0c, #141312), teal accent (#01696f)
+- [ ] **FRONT-35**: Monospace font for text output (JetBrains Mono via CDN)
+- [ ] **FRONT-36**: Sans-serif UI font (Satoshi via Fontshare)
+- [ ] **FRONT-37**: Left sidebar (controls) + main content area (output) layout
+- [ ] **FRONT-38**: Film-strip aesthetic for frame thumbnails
+- [ ] **FRONT-39**: Smooth transitions for panel state changes
+
+### Documentation
+
+- [ ] **DOCS-01**: requirements.txt with all Python dependencies
+- [ ] **DOCS-02**: README.md with prerequisites, install steps, run instructions
+
+## v2 Requirements
+
+Deferred to future release. Tracked but not in current roadmap.
+
+### Batch Processing
+
+- **BATCH-01**: Queue multiple videos for sequential processing
+- **BATCH-02**: Background processing with notification on completion
+
+### Export Formats
+
+- **EXPORT-01**: JSON export with full metadata
+- **EXPORT-02**: SRT subtitle format
+- **EXPORT-03**: PDF with embedded text
+
+### Advanced OCR
+
+- **OCR-01**: EasyOCR as additional engine option
+- **OCR-02**: Confidence scoring per text block
+- **OCR-03**: Text overlay preview on frames
+
+## Out of Scope
+
+Explicitly excluded. Documented to prevent scope creep.
+
+| Feature | Reason |
+|---------|--------|
+| Cloud deployment | Fully local operation for privacy |
+| Video editing | Not a video editor, just OCR extraction |
+| Batch queue UI | Defer to v2; single video processing is primary use case |
+| Mobile UI | Desktop utility app, mobile not a target |
+| Non-English OCR beyond English/Hindi | Scope constraint from requirements |
+| Real-time processing | Not streaming; batch frame-by-frame |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| BACK-01 to BACK-22 | Phase 1: Backend Foundation | Pending |
+| FRONT-01 to FRONT-04 | Phase 2: Frontend Core - Upload | Pending |
+| FRONT-05 to FRONT-09 | Phase 3: Frontend - Timeline | Pending |
+| FRONT-10 to FRONT-18 | Phase 4: Frontend - Controls | Pending |
+| FRONT-19 to FRONT-25 | Phase 5: Processing Pipeline | Pending |
+| FRONT-26 to FRONT-32 | Phase 6: Output Panel | Pending |
+| FRONT-33 to FRONT-39 | Phase 7: Design Polish | Pending |
+| DOCS-01 to DOCS-02 | Phase 1: Backend Foundation | Pending |
+
+**Coverage:**
+- v1 requirements: 57 total
+- Mapped to phases: 57
+- Unmapped: 0
+
+---
+*Requirements defined: 2026-04-22*
+*Last updated: 2026-04-22 after initial definition*
