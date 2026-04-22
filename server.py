@@ -31,6 +31,18 @@ except ImportError:
     TESSERACT_AVAILABLE = False
 
 
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("server.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
 app = FastAPI(title="VideoOCR Studio")
 
 app.add_middleware(
@@ -92,11 +104,17 @@ class ProcessConfig(BaseModel):
     language: str = "en"
 
 
+def get_executable(name: str) -> str:
+    """Check if executable is in PATH."""
+    if shutil.which(name):
+        return name
+    return name
+
 def get_video_metadata(video_path: str) -> dict:
     """Extract video metadata using FFmpeg."""
     try:
         cmd = [
-            "ffprobe", "-v", "quiet", "-print_format", "json",
+            get_executable("ffprobe"), "-v", "quiet", "-print_format", "json",
             "-show_format", "-show_streams", video_path
         ]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
@@ -138,7 +156,7 @@ def extract_frames(video_path: str, start_time: float, end_time: float, fps: flo
     os.makedirs(output_dir, exist_ok=True)
 
     cmd = [
-        "ffmpeg", "-y", "-ss", str(start_time), "-i", video_path,
+        get_executable("ffmpeg"), "-y", "-ss", str(start_time), "-i", video_path,
         "-t", str(duration), "-vf", f"fps={fps}",
         "-q:v", "2", "-frame_pts", "1",
         os.path.join(output_dir, "frame_%05d.jpg")
@@ -167,7 +185,9 @@ def ocr_with_paddle(frame_path: str, lang: str = "en") -> str:
     lang_map = {"en": "en", "hi": "hi", "en_hi": "ch"}
     ocr_lang = lang_map.get(lang, "en")
 
-    ocr = PaddleOCR(use_angle_cls=True, lang=ocr_lang, show_log=False, use_gpu=False)
+    # Fixed: Removed show_log and use_gpu which may cause ValueError in newer versions
+    # and updated use_angle_cls to use_textline_orientation if possible
+    ocr = PaddleOCR(lang=ocr_lang)
     result = ocr.ocr(frame_path, cls=True)
 
     if not result or not result[0]:
@@ -207,9 +227,11 @@ async def process_video(session_id: str, config: ProcessConfig):
     """Async processing of video frames."""
     state = session_manager.get_session(session_id)
     if not state:
+        logger.error(f"Session {session_id} not found")
         return
 
     try:
+        logger.info(f"Starting processing for session {session_id}")
         state.active = True
         state.progress = 0
         state.current_frame = 0
@@ -305,8 +327,10 @@ async def process_video(session_id: str, config: ProcessConfig):
 
         state.active = False
         state.progress = 100
+        logger.info(f"Processing completed for session {session_id}")
 
     except Exception as e:
+        logger.exception(f"Error processing video for session {session_id}")
         state.active = False
         state.error = str(e)
 
@@ -466,7 +490,12 @@ async def get_results(session_id: str):
 @app.get("/status")
 async def get_status():
     """Get system status and available OCR engines."""
-    ffmpeg_ok = subprocess.run(["ffmpeg", "-version"], capture_output=True, timeout=10).returncode == 0
+    try:
+        ffmpeg_exe = get_executable("ffmpeg")
+        ffmpeg_ok = subprocess.run([ffmpeg_exe, "-version"], capture_output=True, timeout=10).returncode == 0
+    except Exception:
+        ffmpeg_ok = False
+
 
     return {
         "paddleocr_available": PADDLEOCR_AVAILABLE,

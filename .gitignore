@@ -41,6 +41,7 @@ tests/
 node_modules/
 sessions/
 .pytest_cache/
+verify_video.py
 
 # OS files
 .DS_Store
