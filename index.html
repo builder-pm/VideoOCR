@@ -679,6 +679,123 @@
             status: 'idle', // 'idle', 'uploading', 'ready', 'processing', 'completed', 'error'
         };
 
+        const Processor = {
+            eventSource: null,
+            stats: {
+                processed: 0,
+                skipped: 0,
+                blocks: 0
+            },
+
+            async start() {
+                try {
+                    UI.setStatus('Starting extraction...', 'warning');
+                    
+                    const payload = {
+                        session_id: App.sessionId,
+                        start_time: App.config.startTime,
+                        end_time: App.config.endTime,
+                        fps: App.config.fps,
+                        blur_threshold: App.config.blurThreshold,
+                        ocr_engine: App.config.ocrEngine,
+                        deduplicate: App.config.deduplicate,
+                        language: App.config.language
+                    };
+
+                    const result = await API.startProcessing(payload);
+                    
+                    App.status = 'processing';
+                    UI.hide('preview-panel');
+                    UI.show('main-output');
+                    
+                    // Reset stats
+                    this.stats = { processed: 0, skipped: 0, blocks: 0 };
+                    UI.el('stats-processed').innerText = '0';
+                    UI.el('stats-skipped').innerText = '0';
+                    UI.el('stats-blocks').innerText = '0';
+                    UI.el('progress-bar-fill').style.width = '0%';
+                    UI.el('progress-bar-fill').style.backgroundColor = 'var(--accent)';
+
+                    // Lock sidebar
+                    UI.el('sidebar').style.pointerEvents = 'none';
+                    UI.el('sidebar').style.opacity = '0.5';
+
+                    this.initSSE();
+                } catch (e) {
+                    console.error('Start processing failed', e);
+                    UI.setStatus(`Failed to start: ${e.message}`, 'destructive');
+                }
+            },
+
+            initSSE() {
+                if (this.eventSource) this.eventSource.close();
+                
+                this.eventSource = new EventSource(`/progress?session_id=${App.sessionId}`);
+                
+                this.eventSource.onmessage = (e) => {
+                    const data = JSON.parse(e.data);
+                    
+                    if (data.type === 'heartbeat') return;
+                    
+                    if (data.type === 'progress') {
+                        this.updateProgress(data);
+                    } else if (data.type === 'complete') {
+                        this.onComplete(data);
+                    } else if (data.type === 'error') {
+                        this.onError(data);
+                    }
+                };
+
+                this.eventSource.onerror = (e) => {
+                    console.error('SSE Error', e);
+                    // Don't immediately error out, the browser might reconnect
+                    // or the server might have just finished.
+                };
+            },
+
+            updateProgress(data) {
+                const percent = (data.current_frame / data.total_frames) * 100;
+                UI.el('progress-bar-fill').style.width = `${percent}%`;
+                UI.el('process-status').innerText = `Processing frame ${data.current_frame} of ${data.total_frames}`;
+                
+                if (data.status === 'processed') this.stats.processed++;
+                else if (data.status === 'skipped') this.stats.skipped++;
+                
+                if (data.blocks_found) this.stats.blocks += data.blocks_found;
+                
+                UI.el('stats-processed').innerText = this.stats.processed;
+                UI.el('stats-skipped').innerText = this.stats.skipped;
+                UI.el('stats-blocks').innerText = this.stats.blocks;
+            },
+
+            onComplete(data) {
+                if (this.eventSource) this.eventSource.close();
+                App.status = 'completed';
+                UI.el('process-status').innerText = 'Extraction Complete!';
+                UI.el('progress-bar-fill').style.width = '100%';
+                
+                // Unlock sidebar
+                UI.el('sidebar').style.pointerEvents = 'auto';
+                UI.el('sidebar').style.opacity = '1';
+                
+                UI.setStatus('Extraction completed successfully', 'success');
+                UI.show('results-split-view');
+            },
+
+            onError(data) {
+                if (this.eventSource) this.eventSource.close();
+                App.status = 'error';
+                UI.el('process-status').innerText = `Error: ${data.message}`;
+                UI.el('progress-bar-fill').style.backgroundColor = 'var(--status-destructive)';
+                
+                // Unlock sidebar
+                UI.el('sidebar').style.pointerEvents = 'auto';
+                UI.el('sidebar').style.opacity = '1';
+                
+                UI.setStatus(`Extraction failed: ${data.message}`, 'destructive');
+            }
+        };
+
         const Timeline = {
             activeHandle: null,
             
@@ -954,8 +1071,7 @@
 
                 // Start Button
                 UI.el('start-btn').addEventListener('click', () => {
-                    console.log('Starting with config:', App.config);
-                    // Next plan will implement this
+                    Processor.start();
                 });
             },
 
