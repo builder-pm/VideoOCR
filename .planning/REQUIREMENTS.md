@@ -96,11 +96,16 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Frontend - Design
 
-- [ ] **FRONT-33**: Dark-mode first with light mode toggle
-- [ ] **FRONT-34**: Color scheme: deep dark surfaces (#0f0e0c, #141312), teal accent (#01696f)
-- [ ] **FRONT-35**: Monospace font for text output (JetBrains Mono via CDN)
-- [ ] **FRONT-36**: Sans-serif UI font (Satoshi via Fontshare)
-- [ ] **FRONT-37**: Left sidebar (controls) + main content area (output) layout
+- [x] **FRONT-33
+**: Dark-mode first with light mode toggle
+- [x] **FRONT-34
+**: Color scheme: deep dark surfaces (#0f0e0c, #141312), teal accent (#01696f)
+- [x] **FRONT-35
+**: Monospace font for text output (JetBrains Mono via CDN)
+- [x] **FRONT-36
+**: Sans-serif UI font (Satoshi via Fontshare)
+- [x] **FRONT-37
+**: Left sidebar (controls) + main content area (output) layout
 - [ ] **FRONT-38**: Film-strip aesthetic for frame thumbnails
 - [ ] **FRONT-39**: Smooth transitions for panel state changes
 

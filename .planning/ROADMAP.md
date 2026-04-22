@@ -7,7 +7,7 @@
 
 ## Phases
 
-- [ ] **Phase 1: Backend Foundation** - Core backend API, upload, frame extraction, SSE streaming, error handling
+- [x] **Phase 1: Backend Foundation** - Core backend API, upload, frame extraction, SSE streaming, error handling
 - [ ] **Phase 2: Frontend Core** - Upload panel, video preview, timeline scrubber, frame rate controls, advanced options
 - [ ] **Phase 3: Processing Pipeline** - Process controls, progress display, output validation, frame browser, export
 - [ ] **Phase 4: Output & Polish** - Design system, dark/light mode, typography, layout polish, documentation
@@ -37,9 +37,9 @@
 10. Errors return friendly messages for missing FFmpeg, unsupported codec, or missing OCR engine
 
 **Plans:**
-- [ ] 01-01-PLAN.md — Session & SSE Refactor
-- [ ] 01-02-PLAN.md — Pipeline Robustness & Error Handling
-- [ ] 01-03-PLAN.md — Testing & Documentation
+- [x] 01-01-PLAN.md — Session & SSE Refactor
+- [x] 01-02-PLAN.md — Pipeline Robustness & Error Handling
+- [x] 01-03-PLAN.md — Testing & Documentation
 
 ---
 
@@ -49,7 +49,7 @@
 
 **Depends on:** Phase 1
 
-**Requirements:** FRONT-01 to FRONT-18
+**Requirements:** FRONT-01 to FRONT-18, FRONT-33 to FRONT-37
 
 **Success Criteria** (what must be TRUE):
 1. User can drag-and-drop video file onto upload area (with click fallback)
@@ -62,7 +62,11 @@
 8. Warning badge appears when frame count exceeds 5000
 9. Advanced options panel is collapsible and includes blur threshold slider, OCR engine toggle, language selector, deduplication toggle
 
-**Plans:** TBD
+**Plans:**
+- [ ] 02-01-PLAN.md — SPA Shell & Foundation
+- [ ] 02-02-PLAN.md — Upload Flow & Metadata
+- [ ] 02-03-PLAN.md — Timeline Range Selector
+- [ ] 02-04-PLAN.md — Config Controls & Estimation
 
 **UI hint:** yes
 
@@ -122,10 +126,10 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Backend Foundation | 0/3 | Not started | - |
-| 2. Frontend Core | 0/9 | Not started | - |
-| 3. Processing Pipeline | 0/11 | Not started | - |
-| 4. Output & Polish | 0/9 | Not started | - |
+| 1. Backend Foundation | 3/3 | Completed | 2026-04-22 |
+| 2. Frontend Core | 0/4 | In progress | - |
+| 3. Processing Pipeline | 0/TBD | Not started | - |
+| 4. Output & Polish | 0/TBD | Not started | - |
 
 ---
 
@@ -143,4 +147,4 @@
 ---
 
 *Roadmap created: 2026-04-22*
-*Roadmap updated: 2026-04-22 (Phase 1 plans added)*
+*Roadmap updated: 2026-04-22 (Phase 1 completed, Phase 2 plans added)*

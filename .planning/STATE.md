@@ -1,7 +1,22 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+current_phase: 02-frontend-core
+status: in-progress
+last_updated: "2026-04-22T17:45:00.000Z"
+progress:
+  total_phases: 4
+  completed_phases: 1
+  total_plans: 7
+  completed_plans: 4
+  percent: 57
+---
+
 # State: VideoOCR Studio
 
 **Project:** VideoOCR Studio
-**Current Phase:** Not started
+**Current Phase:** 02-frontend-core
 **Created:** 2026-04-22
 
 ---
@@ -10,20 +25,20 @@
 
 **Core Value:** Users can extract readable text from video recordings of documents (scrolling lectures, whiteboard videos, scanned page videos) using configurable OCR with frame quality filtering and deduplication.
 
-**Current Focus:** Initial roadmap created; ready to plan Phase 1: Backend Foundation
+**Current Focus:** Phase 2 (Frontend Core) - Upload & Validation
 
 ---
 
 ## Current Position
 
-**Phase:** None (planning complete)
-**Plan:** Not started
-**Status:** Awaiting user approval of roadmap
+**Phase:** 02-frontend-core
+**Plan:** 02-02 (Upload & Validation)
+**Status:** In Progress
 
 ### Progress Bar
 
 ```
-[                    ] 0% - Roadmap complete, planning not started
+[██████░░░░] 57% - Phase 2 In Progress
 ```
 
 ---
@@ -32,8 +47,8 @@
 
 - Phases defined: 4
 - Requirements mapped: 57/57 (100%)
-- Plans created: 0
-- Plans completed: 0
+- Plans created: 7 (3 in P1, 4 in P2)
+- Plans completed: 4
 
 ---
 
@@ -47,28 +62,28 @@
 | PaddleOCR primary, Tesseract fallback | PaddleOCR handles rotated/mixed text better |
 | SSE for progress streaming | Real-time feedback without WebSocket complexity |
 | Dark-mode first | Tool-like utility aesthetic, reduces eye strain |
+| D-02-01-01: Single-file SPA | Inline CSS/JS for portability and simplicity |
 
 ### Architecture Notes (from research)
 
 - FastAPI + uvicorn for backend with native async support
-- FFmpeg invoked via subprocess (NOT ffmpeg-python library)
+- FFmpeg invoked via subprocess with absolute path fallback on Windows
 - OpenCV for frame preprocessing and blur detection
-- Session-based processing with temp file storage
-- Chunked processing to prevent memory exhaustion on large videos
+- Session-based processing with temp file storage in `sessions/`
+- SSE heartbeats implemented every 5 seconds
 
 ### Critical Risks (from research)
 
-1. FFmpeg integration fragility - capture stdout AND stderr, check return codes
-2. Memory exhaustion - process frames in bounded chunks
-3. SSE stalls - implement heartbeat every 5-10 seconds
+1. PaddleOCR oneDNN compatibility on Windows - mitigated by disabling oneDNN and providing Tesseract fallback.
+2. Port conflicts on Windows - mitigated by robust cleanup and port detection.
 
 ---
 
 ## Session Continuity
 
 **Last session:** 2026-04-22
-**Activity:** Created initial roadmap with 4 phases
-**Next action:** Await user approval, then plan Phase 1
+**Activity:** Completed Phase 2 Plan 01 (SPA Shell & Foundation)
+**Next action:** Execute Phase 2 Plan 02 (Upload & Validation)
 
 ---
 
@@ -76,7 +91,6 @@
 
 - Phase 2 (Frontend Core) has **UI hint**: yes
 - Phase 3 (Processing Pipeline) has **UI hint**: yes
-- Plan-Phase may suggest /gsd-ui-phase for these phases
 
 ---
 
