@@ -65,7 +65,7 @@
 **Plans:**
 - [x] 02-01-PLAN.md — SPA Shell & Foundation
 - [x] 02-02-PLAN.md — Upload Flow & Metadata
-- [ ] 02-03-PLAN.md — Timeline Range Selector
+- [x] 02-03-PLAN.md — Timeline Range Selector
 - [ ] 02-04-PLAN.md — Config Controls & Estimation
 
 **UI hint:** yes
@@ -127,7 +127,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Backend Foundation | 3/3 | Completed | 2026-04-22 |
-| 2. Frontend Core | 2/4 | In progress | - |
+| 2. Frontend Core | 3/4 | In progress | - |
 | 3. Processing Pipeline | 0/TBD | Not started | - |
 | 4. Output & Polish | 0/TBD | Not started | - |
 

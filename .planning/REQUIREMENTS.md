@@ -54,11 +54,16 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Frontend - Video Range Selector
 
-- [ ] **FRONT-05**: Interactive timeline scrubber showing full video duration
-- [ ] **FRONT-06**: Two draggable handles for START and END time markers
-- [ ] **FRONT-07**: Real-time timecode display (MM:SS) for both handles
-- [ ] **FRONT-08**: Preview frame thumbnail that updates during scrubbing
-- [ ] **FRONT-09**: Quick presets: "First 2 min", "First 5 min", "Full video"
+- [x] **FRONT-05
+**: Interactive timeline scrubber showing full video duration
+- [x] **FRONT-06
+**: Two draggable handles for START and END time markers
+- [x] **FRONT-07
+**: Real-time timecode display (MM:SS) for both handles
+- [x] **FRONT-08
+**: Preview frame thumbnail that updates during scrubbing
+- [x] **FRONT-09
+**: Quick presets: "First 2 min", "First 5 min", "Full video"
 
 ### Frontend - Frame Rate Selector
 
